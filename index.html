@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1b2f5e">
 <title>Formularz zlecenia | 4Clipper</title>
-<link rel="stylesheet" href="https://geowidget.inpost.pl/inpost-geowidget.css">
-<script src="https://geowidget.inpost.pl/inpost-geowidget.js" defer></script>
 <style>
   :root {
     --bg: #eef1f7; --card: #ffffff; --text: #14203a; --muted: #5b6579;
@@ -457,7 +455,7 @@
 
 <dialog class="map-dialog" id="map-dialog" aria-label="Wybór paczkomatu">
   <div class="map-dialog-head">
-    <strong>Wybierz paczkomat</strong>
+    <strong id="map-title">Wybierz paczkomat</strong>
     <button type="button" id="map-close" aria-label="Zamknij mapę">×</button>
   </div>
   <div class="map-container" id="map-container"></div>
@@ -515,7 +513,10 @@ const CONFIG = {
   ],
   // Geowidget token generated in InPost Manager Paczek (Moje konto -> API -> Geowidget).
   // While it is empty the map button is hidden and customers type the locker code by hand.
-  INPOST_TOKEN: '',
+  // The token is public by design: it only works on the domains entered when it was generated.
+  INPOST_TOKEN: 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkVzROZW9TeXk0OHpCOHg4emdZX2t5dFNiWHY3blZ0eFVGVFpzWV9TUFA4In0.eyJleHAiOjIxMTA0NjAzOTIsImlhdCI6MTc5NTEwMDM5MiwianRpIjoiYWM1ZTJiZWEtZGIyYy00MWY5LWFhM2UtYTEzOTJkNWYzODhhIiwiaXNzIjoiaHR0cHM6Ly9zYW5kYm94LWxvZ2luLmlucG9zdC5wbC9hdXRoL3JlYWxtcy9leHRlcm5hbCIsInN1YiI6ImY6N2ZiZjQxYmEtYTEzZC00MGQzLTk1ZjYtOThhMmIxYmFlNjdiOnpjbE5fZVd4dXRqSFhGQzdEbkxwa1huVnNxalRTSnNlZTE4S3JfNVRkckEiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzaGlweCIsInNlc3Npb25fc3RhdGUiOiJlMWI1NjViYi01OGEzLTQ4M2MtYmYxZC1lMGYxNDk4MDQzODgiLCJzY29wZSI6Im9wZW5pZCBhcGk6YXBpcG9pbnRzIiwic2lkIjoiZTFiNTY1YmItNThhMy00ODNjLWJmMWQtZTBmMTQ5ODA0Mzg4IiwiYWxsb3dlZF9yZWZlcnJlcnMiOiJpdnkzMzAzLmdpdGh1Yi5pbyIsInV1aWQiOiIyYjFlNjI2Mi1iNWY4LTRmNzktOGYxZC04YmIyNjliYTAyMzAifQ.LDdwLNdhbXY1oXEa8RP7hBZAh_f5yVhe_txW4BFw_b04g2ZB_QaL6qr6R7XtT_fyOvxOMjsHGgFPjnfLMsAnCs2KTDMU6dYnoj7Vjurw8k-rvB5w_WSx5bdDWnP9U0IhUzDYZnn-CDrFwqKYo6TU3Ys-Uxd1kIF_lwxVS3R3pF9LYrTnXKr7iQantLr3kwLuD-_osY_vJnhzS5a-RbxvpkvmEZbGIxS-nKMK7hQjT_imVc5xFMRPFzmhLfG4gInTFWSPGcobKb-K7n6oaKDHcUP6Ebxw7fdSAccuYMH4XjjQzG1vLdnINm_sjBh_Snj8QU9HZiRdkrl0Rc9Rb5THrQ',
+  // true = InPost test environment (sandbox token); false = production token and production map.
+  INPOST_SANDBOX: true,
   MAX_PHOTOS: 5,
   MAX_PDF_BYTES: 3 * 1024 * 1024
 };
@@ -777,6 +778,19 @@ document.querySelectorAll('input[name=returnOption]').forEach((radio) => {
 });
 
 /* ===== PARCEL LOCKER (InPost Geowidget v5) ===== */
+// Map assets come from the test or the production server, depending on CONFIG.INPOST_SANDBOX.
+if (CONFIG.INPOST_TOKEN) {
+  const geowidgetBase = CONFIG.INPOST_SANDBOX ? 'https://sandbox-easy-geowidget-sdk.easypack24.net' : 'https://geowidget.inpost.pl';
+  const styles = document.createElement('link');
+  styles.rel = 'stylesheet';
+  styles.href = geowidgetBase + '/inpost-geowidget.css';
+  const script = document.createElement('script');
+  script.src = geowidgetBase + '/inpost-geowidget.js';
+  script.defer = true;
+  document.head.append(styles, script);
+  if (CONFIG.INPOST_SANDBOX) document.getElementById('map-title').textContent = 'Wybierz paczkomat (mapa testowa)';
+}
+
 // Address of the selected point, from the widget's data (line1/line2 or address_details).
 function formatPointAddress(point) {
   const address = point.address || {};
