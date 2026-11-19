@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1b2f5e">
-<title>Formularz zamówienia | 4Clipper</title>
+<title>Formularz zlecenia | 4Clipper</title>
 <link rel="stylesheet" href="https://geowidget.inpost.pl/inpost-geowidget.css">
 <script src="https://geowidget.inpost.pl/inpost-geowidget.js" defer></script>
 <style>
@@ -64,7 +64,7 @@
   .phone-group input { flex: 1; min-width: 0; }
   button:focus-visible, .tile:has(input:focus-visible), .dropzone:has(input:focus-visible) {
     outline: 3px solid var(--focus); outline-offset: 2px; }
-  /* required field left empty or invalid after pressing "Wyślij zamówienie" */
+  /* required field left empty or invalid after pressing "Wyślij zlecenie" */
   input[aria-invalid="true"], textarea[aria-invalid="true"], .dropdown-toggle[aria-invalid="true"] {
     border-color: var(--danger) !important; background: #fff4f3 !important; }
   input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgba(179, 38, 30, .2); }
@@ -231,8 +231,8 @@
   </div>
   <div class="hero">
     <div class="hero-inner">
-      <h1>Formularz zamówienia</h1>
-      <p class="lead">Wypełnij formularz. Po wysłaniu dostaniesz numer zamówienia.</p>
+      <h1>Formularz zlecenia</h1>
+      <p class="lead">Wypełnij formularz. Po wysłaniu dostaniesz numer zlecenia.</p>
     </div>
   </div>
 </header>
@@ -289,7 +289,7 @@
     </section>
 
     <section class="card" id="items-section">
-      <div class="card-head"><span class="step">2</span><div><h2>Zawartość zamówienia *</h2><p>Wybierz pozycje z listy i wpisz ilość.</p></div></div>
+      <div class="card-head"><span class="step">2</span><div><h2>Zawartość zlecenia *</h2><p>Wybierz pozycje z listy i wpisz ilość.</p></div></div>
       <div class="dropdown" id="items-dropdown">
         <button type="button" class="dropdown-toggle" id="items" aria-haspopup="true"
                 aria-expanded="false" aria-controls="items-panel">
@@ -327,7 +327,7 @@
       </div>
       <div class="field">
         <label class="label" for="notes">Uwagi</label>
-        <textarea id="notes" placeholder="Np. szczegóły dotyczące zamówienia"></textarea>
+        <textarea id="notes" placeholder="Np. szczegóły dotyczące zlecenia"></textarea>
       </div>
     </section>
 
@@ -335,7 +335,7 @@
       <div class="card-head"><span class="step">4</span><div><h2>Dostawa i odbiór</h2></div></div>
 
       <div class="field">
-        <span class="group-label" id="label-handover-method">Jak dostarczysz zamówienie? *</span>
+        <span class="group-label" id="label-handover-method">Jak dostarczysz zlecenie? *</span>
         <div class="tiles" id="handover-method" role="radiogroup" aria-labelledby="label-handover-method">
           <label class="tile"><input class="sr-only" type="radio" name="handoverOption" value="in-person">
             <svg class="icon"><use href="#i-user"/></svg><span class="tile-title">Osobiście</span></label>
@@ -345,11 +345,11 @@
             <svg class="icon"><use href="#i-locker"/></svg><span class="tile-title">Paczkomat<span class="tile-sub">InPost</span></span></label>
         </div>
         <p class="error" id="err-handover-method" role="alert"></p>
-        <p class="note" id="handover-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zamówienia. Numer dostaniesz po wysłaniu tego formularza.</span></p>
+        <p class="note" id="handover-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zlecenia. Numer dostaniesz po wysłaniu tego formularza.</span></p>
       </div>
 
       <div class="field spaced">
-        <span class="group-label" id="label-return-option">Jak odbierzesz zamówienie?</span>
+        <span class="group-label" id="label-return-option">Jak odbierzesz zlecenie?</span>
         <div class="tiles" id="return-option" role="radiogroup" aria-labelledby="label-return-option">
           <label class="tile"><input class="sr-only" type="radio" name="returnOption" value="in-person">
             <svg class="icon"><use href="#i-user"/></svg><span class="tile-title">Osobiście</span></label>
@@ -404,20 +404,20 @@
     <p class="status" id="status" role="alert"></p>
     <div class="submit-bar">
       <div class="summary" id="summary"></div>
-      <button type="submit" class="primary" id="submit-button">Wyślij zamówienie</button>
+      <button type="submit" class="primary" id="submit-button">Wyślij zlecenie</button>
     </div>
   </form>
 
   <section class="card done" id="done" hidden>
     <div class="check"><svg class="icon"><use href="#i-check"/></svg></div>
-    <h2>Dziękujemy, zamówienie zostało przyjęte.</h2>
-    <p>Numer zamówienia:</p>
+    <h2>Dziękujemy, zlecenie zostało przyjęte.</h2>
+    <p>Numer zlecenia:</p>
     <p class="order-number" id="order-number"></p>
     <p class="hint">Zachowaj ten numer, przyda się przy kontakcie.</p>
-    <p class="note" id="done-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zamówienia.</span></p>
+    <p class="note" id="done-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zlecenia.</span></p>
     <div class="actions">
       <button type="button" id="copy-number">Skopiuj numer</button>
-      <button type="button" class="secondary" id="new-order">Złóż kolejne zamówienie</button>
+      <button type="button" class="secondary" id="new-order">Złóż kolejne zlecenie</button>
     </div>
   </section>
 </main>
@@ -1030,13 +1030,13 @@ $('order-form').addEventListener('submit', async (event) => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const known = result && SERVER_ERRORS[result.error];
-      showStatus(known || 'Nie udało się zapisać zamówienia' + (result && result.error ? ' (' + result.error + ')' : '') + '. Sprawdź dane i spróbuj ponownie.');
+      showStatus(known || 'Nie udało się zapisać zlecenia' + (result && result.error ? ' (' + result.error + ')' : '') + '. Sprawdź dane i spróbuj ponownie.');
     }
   } catch (error) {
-    showStatus('Nie udało się wysłać zamówienia. Sprawdź połączenie i spróbuj ponownie. Ponowna próba nie utworzy duplikatu.');
+    showStatus('Nie udało się wysłać zlecenia. Sprawdź połączenie i spróbuj ponownie. Ponowna próba nie utworzy duplikatu.');
   } finally {
     button.disabled = false;
-    button.textContent = 'Wyślij zamówienie';
+    button.textContent = 'Wyślij zlecenie';
   }
 });
 
