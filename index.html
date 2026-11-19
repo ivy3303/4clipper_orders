@@ -14,7 +14,7 @@
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--bg); color: var(--text);
+  body { margin: 0; background: linear-gradient(180deg, #e8edf7 0%, #f3f5fa 45%, #eceff6 100%) fixed; color: var(--text);
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   [hidden] { display: none !important; }
   .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
@@ -22,20 +22,39 @@
   .icon { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
     stroke-linecap: round; stroke-linejoin: round; }
 
+  /* background line art (tools), fixed behind the content */
+  .bg-art { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: var(--accent-light);
+    background-image: radial-gradient(rgba(27, 47, 94, .05) 1px, transparent 1.3px); background-size: 28px 28px; }
+  symbol * { vector-effect: non-scaling-stroke; }
+  .art { position: absolute; fill: none; stroke: currentColor; stroke-width: 1.3px; stroke-linejoin: round; stroke-linecap: round; opacity: .3; }
+  .a1 { width: 120px; left: 4%; top: 29%; transform: rotate(-14deg); }
+  .a2 { width: 88px; right: 5%; top: 27%; transform: rotate(12deg); }
+  .a3 { width: 250px; left: 1%; bottom: 12%; transform: rotate(-9deg); }
+  .a4 { width: 240px; right: 1%; bottom: 7%; transform: rotate(13deg); }
+  .a5 { width: 76px; right: 9%; top: 58%; transform: rotate(-24deg); opacity: .2; }
+  .a6 { width: 56px; left: 14%; top: 60%; transform: rotate(22deg); opacity: .2; }
+  @media (max-width: 900px) { .art { opacity: .16; } .a3, .a4 { width: 170px; } .a5, .a6 { display: none; } }
+  header, main, .site-footer { position: relative; z-index: 1; }
+
   /* header */
   .brand { background: #fff; padding: 14px 16px; border-bottom: 1px solid var(--line); }
   .brand-inner, .hero-inner { max-width: 680px; margin: 0 auto; }
   .logo { display: block; height: 44px; width: auto; }
-  .hero { background: linear-gradient(135deg, #12234b 0%, #1f3a78 100%); color: #fff; padding: 28px 16px 56px; }
+  .hero { position: relative; overflow: hidden; color: #fff; padding: 34px 16px 64px;
+    background: radial-gradient(120% 140% at 85% 0%, #2c4c96 0%, rgba(44, 76, 150, 0) 55%), linear-gradient(135deg, #0f1f45 0%, #1b3270 100%); }
+  .hero-art { position: absolute; right: 7%; top: -30px; height: 190%; width: auto; fill: none; stroke: #fff; stroke-width: 1.3px;
+    stroke-linejoin: round; stroke-linecap: round; opacity: .16; transform: rotate(24deg); pointer-events: none; }
+  .hero-inner { position: relative; }
+  h1 { letter-spacing: -.01em; }
   h1 { font-size: 1.75rem; line-height: 1.2; margin: 0 0 6px; }
   .lead { color: #cdd8f3; margin: 0; }
   main { max-width: 680px; margin: -32px auto 0; padding: 0 16px 24px; }
 
   /* cards */
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-    padding: 18px 16px 20px; margin: 0 0 16px; box-shadow: var(--shadow); }
-  .card-head { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
-  .step { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff;
+  .card { background: var(--card); border: 1px solid #dde3ef; border-top: 3px solid var(--accent-light); border-radius: 14px;
+    padding: 18px 18px 22px; margin: 0 0 16px; box-shadow: 0 1px 2px rgba(20, 32, 58, .06), 0 10px 28px rgba(20, 32, 58, .09); }
+  .card-head { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; padding-bottom: 14px; border-bottom: 1px solid #e8ecf4; }
+  .step { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent-light), var(--accent)); color: #fff;
     display: grid; place-items: center; font-weight: 700; flex: none; }
   .card-head h2 { font-size: 1.1rem; margin: 0; color: var(--accent); }
   .card-head p { margin: 0; color: var(--muted); font-size: .875rem; }
@@ -221,6 +240,8 @@
   .done .mail-info { max-width: 460px; margin: 14px auto 0; font-size: .92rem; line-height: 1.5; color: #46526a; }
   .done .mail-info a { color: var(--accent-light); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
   .done .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .site-footer { text-align: center; padding: 8px 16px 96px; font-size: .85rem; color: var(--muted); }
+  .site-footer a { color: var(--accent-light); font-weight: 600; text-decoration: none; }
   .honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 </style>
 </head>
@@ -232,8 +253,51 @@
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="art-scissors" viewBox="0 0 160 300">
+    <path d="M114 6 L95 124 L56 206 L46 200 L76 132 Z"/>
+    <path d="M46 6 L65 124 L104 206 L114 200 L84 132 Z"/>
+    <path d="M110 18 L84 122"/><path d="M50 18 L76 122"/>
+    <ellipse cx="46" cy="244" rx="27" ry="35" transform="rotate(10 46 244)"/>
+    <ellipse cx="46" cy="244" rx="18" ry="26" transform="rotate(10 46 244)"/>
+    <ellipse cx="114" cy="244" rx="27" ry="35" transform="rotate(-10 114 244)"/>
+    <ellipse cx="114" cy="244" rx="18" ry="26" transform="rotate(-10 114 244)"/>
+    <path d="M134 214 C150 226 154 244 150 262 C148 270 144 274 140 276"/>
+    <circle cx="80" cy="130" r="6"/><path d="M76.5 126.5 L83.5 133.5"/>
+  </symbol>
+  <symbol id="art-clipper" viewBox="0 0 120 290">
+    <path d="M34 36 V22 H37 V36 M39 36 V22 H43 V36 M45 36 V22 H48 V36 M50 36 V22 H54 V36 M56 36 V22 H59 V36 M61 36 V22 H65 V36 M67 36 V22 H70 V36 M72 36 V22 H76 V36 M78 36 V22 H81 V36 M83 36 V22 H87 V36 "/>
+    <path d="M30 36 H90 V56 H30 Z"/><path d="M30 46 H90"/>
+    <path d="M36 56 V76 M84 56 V76"/>
+    <path d="M30 76 H90 Q96 76 96 83 L101 250 Q101 278 78 278 H42 Q19 278 19 250 L24 83 Q24 76 30 76 Z"/>
+    <path d="M30 88 H90"/>
+    <rect x="52" y="104" width="16" height="42" rx="8"/><circle cx="60" cy="118" r="4.5"/>
+    <path d="M32 176 Q60 184 88 176 M31 188 Q60 196 89 188 M30 200 Q60 208 90 200 M30 212 Q60 220 90 212"/>
+    <path d="M46 246 H74"/>
+  </symbol>
+  <symbol id="art-razor" viewBox="0 0 270 100">
+    <path d="M10 26 H156 V62 H34 C18 62 10 48 10 26 Z"/>
+    <path d="M26 34 H150"/>
+    <circle cx="40" cy="48" r="4"/>
+    <path d="M156 34 C196 30 236 38 258 58 C262 66 254 74 246 70 C222 58 188 54 156 58"/>
+    <circle cx="164" cy="46" r="5"/><circle cx="164" cy="46" r="1.6"/>
+    <path d="M196 46 C214 46 230 52 240 60"/>
+  </symbol>
+  <symbol id="art-comb" viewBox="0 0 240 80">
+    <rect x="6" y="6" width="228" height="22" rx="11"/>
+    <path d="M16.0 28 L16.0 66 L19.5 28 L23.0 66 L26.5 28 L30.0 66 L33.5 28 L37.0 66 L40.5 28 L44.0 66 L47.5 28 L51.0 66 L54.5 28 L58.0 66 L61.5 28 L65.0 66 L68.5 28 L72.0 66 L75.5 28 L79.0 66 L82.5 28 L86.0 66 L89.5 28 L93.0 66 L96.5 28 L100.0 66 L104.0 28 L104.0 70 L111.8 28 L119.5 70 L127.2 28 L135.0 70 L142.8 28 L150.5 70 L158.2 28 L166.0 70 L173.8 28 L181.5 70 L189.2 28 L197.0 70 L204.8 28 L212.5 70 L220.2 28 L228.0 70"/>
+    <path d="M30 17 H210"/>
+  </symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
 </svg>
+
+<div class="bg-art" aria-hidden="true">
+  <svg class="art a1" viewBox="0 0 160 300"><use href="#art-scissors"/></svg>
+  <svg class="art a2" viewBox="0 0 120 290"><use href="#art-clipper"/></svg>
+  <svg class="art a3" viewBox="0 0 270 100"><use href="#art-razor"/></svg>
+  <svg class="art a4" viewBox="0 0 240 80"><use href="#art-comb"/></svg>
+  <svg class="art a5" viewBox="0 0 160 300"><use href="#art-scissors"/></svg>
+  <svg class="art a6" viewBox="0 0 120 290"><use href="#art-clipper"/></svg>
+</div>
 
 <header>
   <div class="brand">
@@ -248,6 +312,7 @@
     </div>
   </div>
   <div class="hero">
+    <svg class="hero-art" viewBox="0 0 160 300" aria-hidden="true"><use href="#art-scissors"/></svg>
     <div class="hero-inner">
       <h1>Formularz zlecenia</h1>
       <p class="lead">Wypełnij formularz. Po wysłaniu dostaniesz numer zlecenia.</p>
@@ -457,6 +522,8 @@
     </div>
   </section>
 </main>
+
+<footer class="site-footer">4Clipper &middot; <a href="mailto:kontakt@4clipper.pl">kontakt@4clipper.pl</a></footer>
 
 <dialog class="map-dialog" id="map-dialog" aria-label="Wybór paczkomatu">
   <div class="map-dialog-head">
