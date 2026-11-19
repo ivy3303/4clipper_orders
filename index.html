@@ -153,6 +153,8 @@
   .thumbs { list-style: none; padding: 0; margin: 12px 0 0; display: flex; gap: 10px; flex-wrap: wrap; }
   .thumbs li { position: relative; }
   .thumbs img { width: 84px; height: 84px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  .pdf-tile { width: 84px; height: 84px; border-radius: 10px; border: 1px solid var(--line); background: #fdecea;
+    color: var(--danger); font-weight: 700; display: grid; place-items: center; }
   .thumbs button { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; padding: 0;
     border-radius: 50%; line-height: 1; font-size: 16px; box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
 
@@ -295,9 +297,9 @@
       <div class="field">
         <label class="dropzone" id="dropzone" for="photos">
           <svg class="icon"><use href="#i-camera"/></svg>
-          <strong>Dodaj zdjęcia</strong>
-          <span>Kliknij lub przeciągnij pliki tutaj (do 5). Zdjęcia są zmniejszane przed wysłaniem.</span>
-          <input class="sr-only" type="file" id="photos" accept="image/*" multiple>
+          <strong>Dodaj zdjęcia lub plik PDF</strong>
+          <span>Kliknij lub przeciągnij pliki tutaj (do 5). Zdjęcia są zmniejszane przed wysłaniem, PDF może mieć do 3 MB.</span>
+          <input class="sr-only" type="file" id="photos" accept="image/*,application/pdf" multiple>
         </label>
         <ul class="thumbs" id="thumbnails"></ul>
         <p class="error" id="err-photos" role="alert"></p>
@@ -364,6 +366,11 @@
 
       <div class="panel" id="locker-panel" hidden>
         <p class="panel-title"><svg class="icon"><use href="#i-locker"/></svg>Paczkomat</p>
+        <div class="field">
+          <label class="label" for="locker-city">Miejscowość, w której szukasz paczkomatu *</label>
+          <input type="text" id="locker-city" autocomplete="address-level2" placeholder="np. Warszawa">
+          <p class="error" id="err-locker-city" role="alert"></p>
+        </div>
         <button type="button" class="secondary" id="map-button"><svg class="icon"><use href="#i-pin"/></svg>Wybierz paczkomat na mapie</button>
         <div class="locker-info" id="locker-info" aria-live="polite"></div>
         <div class="field locker-code-field">
@@ -445,7 +452,8 @@ const CONFIG = {
       'Nożyczki chirurgiczne duże NCHD 40,-'
     ] }
   ],
-  MAX_PHOTOS: 5
+  MAX_PHOTOS: 5,
+  MAX_PDF_BYTES: 3 * 1024 * 1024
 };
 
 // Flat list used everywhere else: [{ name, group }]
@@ -728,13 +736,18 @@ $('map-button').addEventListener('click', () => {
     setError('locker-code', 'Mapa się nie załadowała. Wpisz kod paczkomatu ręcznie.');
     return;
   }
-  const mapConfig = {
+  // The map loads points for a given city, so the city is needed before it is opened.
+  if (!value('locker-city')) {
+    setError('locker-city', 'Wpisz miejscowość, aby pokazać paczkomaty na mapie.');
+    $('locker-city').focus();
+    return;
+  }
+  new window.Furgonetka.Map({
     courierServices: ['inpost'],
-    type: 'parcel_machine',
+    city: value('locker-city'),
     zoom: 15,
     callback: (result) => { if (result && result.point) setLocker(result.point); }
-  };
-  new window.Furgonetka.Map(mapConfig).show();
+  }).show();
 });
 
 $('locker-code').addEventListener('input', () => {
@@ -788,15 +801,21 @@ function renderThumbnails() {
   list.textContent = '';
   photos.forEach((photo, index) => {
     const item = document.createElement('li');
-    const image = document.createElement('img');
-    image.src = photo.url;
-    image.alt = 'Zdjęcie ' + (index + 1);
+    const image = photo.isPdf ? document.createElement('div') : document.createElement('img');
+    if (photo.isPdf) {
+      image.className = 'pdf-tile';
+      image.textContent = 'PDF';
+      image.title = photo.name;
+    } else {
+      image.src = photo.url;
+      image.alt = 'Zdjęcie ' + (index + 1);
+    }
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.textContent = '×';
-    remove.setAttribute('aria-label', 'Usuń zdjęcie ' + (index + 1));
+    remove.setAttribute('aria-label', 'Usuń plik ' + (index + 1));
     remove.addEventListener('click', () => {
-      URL.revokeObjectURL(photo.url);
+      if (photo.url) URL.revokeObjectURL(photo.url);
       photos.splice(index, 1);
       renderThumbnails();
     });
@@ -809,15 +828,23 @@ async function addPhotos(files) {
   setError('photos', '');
   let skipped = 0;
   let failed = 0;
+  let tooBig = 0;
   for (const file of files) {
-    if (!/^image\//.test(file.type)) { failed++; continue; }
+    const isPdf = file.type === 'application/pdf';
+    if (!isPdf && !/^image\//.test(file.type)) { failed++; continue; }
     if (photos.length >= CONFIG.MAX_PHOTOS) { skipped++; continue; }
+    if (isPdf) {
+      if (file.size > CONFIG.MAX_PDF_BYTES) { tooBig++; continue; }
+      try { photos.push({ name: file.name, data: await blobToBase64(file), isPdf: true }); } catch (error) { failed++; }
+      continue;
+    }
     try { photos.push(await compressImage(file)); } catch (error) { failed++; }
   }
   renderThumbnails();
   const messages = [];
   if (skipped) messages.push('Maksymalnie ' + CONFIG.MAX_PHOTOS + ' zdjęć. Część pominięto.');
-  if (failed) messages.push('Nie udało się odczytać ' + failed + ' plik(ów). Użyj formatu JPG lub PNG.');
+  if (tooBig) messages.push('Plik PDF jest za duży (maksymalnie 3 MB).');
+  if (failed) messages.push('Nie udało się odczytać ' + failed + ' plik(ów). Użyj formatu JPG, PNG lub PDF.');
   if (messages.length) setError('photos', messages.join(' '));
 }
 
