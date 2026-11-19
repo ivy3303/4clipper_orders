@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1b2f5e">
 <title>Formularz zamówienia | 4Clipper</title>
-<script src="https://furgonetka.pl/js/dist/map/map.js" defer></script>
+<link rel="stylesheet" href="https://geowidget.inpost.pl/inpost-geowidget.css">
+<script src="https://geowidget.inpost.pl/inpost-geowidget.js" defer></script>
 <style>
   :root {
     --bg: #eef1f7; --card: #ffffff; --text: #14203a; --muted: #5b6579;
@@ -171,6 +172,17 @@
   .locker-info:empty { display: none; }
   .locker-info strong { color: var(--accent); }
   .locker-code-field { margin-top: 14px; }
+
+  /* parcel locker map (InPost Geowidget) in a dialog */
+  .map-dialog { width: min(720px, 96vw); height: min(640px, 88vh); padding: 0; border: 0; border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(20, 32, 58, .35); overflow: hidden; color: var(--text); }
+  .map-dialog[open] { display: flex; flex-direction: column; }
+  .map-dialog::backdrop { background: rgba(14, 24, 52, .55); }
+  .map-dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px;
+    background: var(--accent); color: #fff; }
+  .map-dialog-head button { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 20px; line-height: 1; }
+  .map-container { flex: 1; min-height: 0; }
+  .map-container inpost-geowidget { display: block; width: 100%; height: 100%; }
 
   /* submit bar */
   .status { margin: 0 0 12px; padding: 12px; border-radius: 10px; background: #fdecea; color: var(--danger); }
@@ -378,17 +390,12 @@
 
       <div class="panel" id="locker-panel" hidden>
         <p class="panel-title"><svg class="icon"><use href="#i-locker"/></svg>Paczkomat</p>
-        <div class="field">
-          <label class="label" for="locker-city">Miejscowość, w której szukasz paczkomatu *</label>
-          <input type="text" id="locker-city" autocomplete="address-level2" placeholder="np. Warszawa">
-          <p class="error" id="err-locker-city" role="alert"></p>
-        </div>
         <button type="button" class="secondary" id="map-button"><svg class="icon"><use href="#i-pin"/></svg>Wybierz paczkomat na mapie</button>
         <div class="locker-info" id="locker-info" aria-live="polite"></div>
         <div class="field locker-code-field">
           <label class="label" for="locker-code">Kod paczkomatu *</label>
           <input type="text" id="locker-code" placeholder="np. WAW116A" autocomplete="off" autocapitalize="characters">
-          <p class="hint">Uzupełni się po wyborze na mapie. Możesz też wpisać go ręcznie.</p>
+          <p class="hint" id="locker-code-hint">Uzupełni się po wyborze na mapie. Możesz też wpisać go ręcznie.</p>
           <p class="error" id="err-locker-code" role="alert"></p>
         </div>
       </div>
@@ -414,6 +421,14 @@
     </div>
   </section>
 </main>
+
+<dialog class="map-dialog" id="map-dialog" aria-label="Wybór paczkomatu">
+  <div class="map-dialog-head">
+    <strong>Wybierz paczkomat</strong>
+    <button type="button" id="map-close" aria-label="Zamknij mapę">×</button>
+  </div>
+  <div class="map-container" id="map-container"></div>
+</dialog>
 
 <script>
 /* ===== SETTINGS ===== */
@@ -465,6 +480,9 @@ const CONFIG = {
       'Nożyczki chirurgiczne duże NCHD 40,-'
     ] }
   ],
+  // Geowidget token generated in InPost Manager Paczek (Moje konto -> API -> Geowidget).
+  // While it is empty the map button is hidden and customers type the locker code by hand.
+  INPOST_TOKEN: '',
   MAX_PHOTOS: 5,
   MAX_PDF_BYTES: 3 * 1024 * 1024
 };
@@ -721,20 +739,21 @@ document.querySelectorAll('input[name=returnOption]').forEach((radio) => {
   radio.addEventListener('change', updateReturnPanels);
 });
 
-/* ===== PARCEL LOCKER (Furgonetka map widget) ===== */
-// The widget's point object may carry the address as a string or as an object; handle both.
+/* ===== PARCEL LOCKER (InPost Geowidget v5) ===== */
+// Address of the selected point, from the widget's data (line1/line2 or address_details).
 function formatPointAddress(point) {
-  const address = point.address || point.description || '';
+  const address = point.address || {};
   if (typeof address === 'string') return address;
-  const parts = [
-    [address.street, address.building_number || address.buildingNumber].filter(Boolean).join(' '),
-    [address.post_code || address.postCode || address.zip, address.city].filter(Boolean).join(' ')
-  ].filter(Boolean);
-  return parts.join(', ');
+  if (address.line1) return [address.line1, address.line2].filter(Boolean).join(', ');
+  const details = point.address_details || address;
+  return [
+    [details.street, details.building_number].filter(Boolean).join(' '),
+    [details.post_code, details.city].filter(Boolean).join(' ')
+  ].filter(Boolean).join(', ');
 }
 
 function setLocker(point) {
-  const code = String((point && point.code) || '').toUpperCase();
+  const code = String((point && point.name) || '').toUpperCase();
   $('locker-code').value = code;
   const info = $('locker-info');
   info.textContent = '';
@@ -742,30 +761,44 @@ function setLocker(point) {
     const title = document.createElement('strong');
     title.textContent = 'Wybrany paczkomat: ' + code;
     info.append(title);
-    const address = point ? formatPointAddress(point) : '';
+    const address = formatPointAddress(point);
     if (address) info.append(document.createElement('br'), address);
   }
   setError('locker-code', '');
 }
 
-$('map-button').addEventListener('click', () => {
-  if (!window.Furgonetka || !window.Furgonetka.Map) {
+// Called by the widget (attribute onpoint="onInpostPoint") when the customer picks a point.
+function onInpostPoint(point) {
+  setLocker(point);
+  $('map-dialog').close();
+}
+
+function openMap() {
+  if (!window.customElements || !customElements.get('inpost-geowidget')) {
     setError('locker-code', 'Mapa się nie załadowała. Wpisz kod paczkomatu ręcznie.');
     return;
   }
-  // The map loads points for a given city, so the city is needed before it is opened.
-  if (!value('locker-city')) {
-    setError('locker-city', 'Wpisz miejscowość, aby pokazać paczkomaty na mapie.');
-    $('locker-city').focus();
-    return;
+  // The widget is created on first use.
+  if (!$('map-container').firstElementChild) {
+    const widget = document.createElement('inpost-geowidget');
+    widget.setAttribute('onpoint', 'onInpostPoint');
+    widget.setAttribute('token', CONFIG.INPOST_TOKEN);
+    widget.setAttribute('language', 'pl');
+    widget.setAttribute('config', 'parcelCollect');
+    $('map-container').append(widget);
   }
-  new window.Furgonetka.Map({
-    courierServices: ['inpost'],
-    city: value('locker-city'),
-    zoom: 15,
-    callback: (result) => { if (result && result.point) setLocker(result.point); }
-  }).show();
-});
+  $('map-dialog').showModal();
+}
+
+if (CONFIG.INPOST_TOKEN) {
+  $('map-button').addEventListener('click', openMap);
+} else {
+  // No token yet: no map, the customer enters the code by hand.
+  $('map-button').hidden = true;
+  $('locker-code-hint').textContent = 'Wpisz kod paczkomatu InPost, np. WAW116A.';
+}
+$('map-close').addEventListener('click', () => $('map-dialog').close());
+$('map-dialog').addEventListener('click', (event) => { if (event.target === $('map-dialog')) $('map-dialog').close(); });
 
 $('locker-code').addEventListener('input', () => {
   $('locker-info').textContent = '';
