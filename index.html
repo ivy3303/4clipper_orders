@@ -53,6 +53,8 @@
     width: 100%; font: inherit; padding: 11px 12px; border: 1px solid var(--line);
     border-radius: 10px; background: #fff; color: inherit; transition: border-color .15s, box-shadow .15s; }
   input:hover, textarea:hover { border-color: #aab5cc; }
+  input[readonly] { background: #eef1f8; cursor: default; font-weight: 600; letter-spacing: .04em; }
+  input[readonly]:hover { border-color: var(--line, #d3d9e6); }
   input:focus, textarea:focus { outline: none; border-color: var(--accent-light); box-shadow: 0 0 0 3px rgba(47, 77, 148, .22); }
   textarea { min-height: 96px; resize: vertical; }
   .phone-group { display: flex; gap: 8px; }
@@ -425,8 +427,8 @@
         <div class="locker-info" id="locker-info" aria-live="polite"></div>
         <div class="field locker-code-field">
           <label class="label" for="locker-code">Kod paczkomatu *</label>
-          <input type="text" id="locker-code" placeholder="np. WAW116A" autocomplete="off" autocapitalize="characters">
-          <p class="hint" id="locker-code-hint">Uzupełni się po wyborze na mapie. Możesz też wpisać go ręcznie.</p>
+          <input type="text" id="locker-code" placeholder="Wybierz paczkomat na mapie" autocomplete="off" autocapitalize="characters" readonly>
+          <p class="hint" id="locker-code-hint">Uzupełni się po wybraniu paczkomatu na mapie.</p>
           <p class="error" id="err-locker-code" role="alert"></p>
         </div>
       </div>
@@ -787,8 +789,16 @@ if (CONFIG.INPOST_TOKEN) {
   const script = document.createElement('script');
   script.src = geowidgetBase + '/inpost-geowidget.js';
   script.defer = true;
+  script.addEventListener('error', () => allowManualLocker('Mapa nie załadowała się.'));
   document.head.append(styles, script);
   if (CONFIG.INPOST_SANDBOX) document.getElementById('map-title').textContent = 'Wybierz paczkomat (mapa testowa)';
+}
+
+// The locker code is read-only (filled in from the map). It becomes editable only when the map cannot be used.
+function allowManualLocker(reason) {
+  $('locker-code').readOnly = false;
+  $('locker-code').placeholder = 'np. WAW116A';
+  $('locker-code-hint').textContent = reason + ' Wpisz kod paczkomatu InPost ręcznie, np. WAW116A.';
 }
 
 // Address of the selected point, from the widget's data (line1/line2 or address_details).
@@ -824,9 +834,14 @@ function onInpostPoint(point) {
   $('map-dialog').close();
 }
 
-function openMap() {
-  if (!window.customElements || !customElements.get('inpost-geowidget')) {
-    setError('locker-code', 'Mapa się nie załadowała. Wpisz kod paczkomatu ręcznie.');
+async function openMap() {
+  const defined = () => window.customElements && customElements.get('inpost-geowidget');
+  if (!defined() && window.customElements) {
+    // Give a slow connection a few seconds before giving up on the map.
+    await Promise.race([customElements.whenDefined('inpost-geowidget'), new Promise((resolve) => setTimeout(resolve, 4000))]);
+  }
+  if (!defined()) {
+    allowManualLocker('Mapa nie otwiera się.');
     return;
   }
   // The widget is created on first use.
@@ -844,9 +859,9 @@ function openMap() {
 if (CONFIG.INPOST_TOKEN) {
   $('map-button').addEventListener('click', openMap);
 } else {
-  // No token yet: no map, the customer enters the code by hand.
+  // No token: no map, so the customer enters the code by hand.
   $('map-button').hidden = true;
-  $('locker-code-hint').textContent = 'Wpisz kod paczkomatu InPost, np. WAW116A.';
+  allowManualLocker('Mapa jest niedostępna.');
 }
 $('map-close').addEventListener('click', () => $('map-dialog').close());
 $('map-dialog').addEventListener('click', (event) => { if (event.target === $('map-dialog')) $('map-dialog').close(); });
@@ -1006,7 +1021,7 @@ function validateForm() {
   setError('locker-code', '');
   if (option === 'locker') {
     const lockerCode = value('locker-code').toUpperCase();
-    if (!lockerCode) { setError('locker-code', 'Wybierz paczkomat na mapie lub wpisz jego kod.'); invalid.push('locker-code'); }
+    if (!lockerCode) { setError('locker-code', $('locker-code').readOnly ? 'Wybierz paczkomat na mapie.' : 'Wpisz kod paczkomatu.'); invalid.push('locker-code'); }
     else if (!/^[A-Z0-9-]{4,20}$/.test(lockerCode)) { setError('locker-code', 'Nieprawidłowy kod paczkomatu.'); invalid.push('locker-code'); }
   }
 
