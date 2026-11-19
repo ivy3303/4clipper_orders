@@ -118,10 +118,15 @@
     box-shadow: 0 14px 34px rgba(20, 32, 58, .22); overflow: hidden; animation: reveal .15s ease; }
   .dropdown-search { padding: 8px; border-bottom: 1px solid var(--line); background: var(--accent-soft); }
   .dropdown-list { max-height: 320px; overflow-y: auto; overscroll-behavior: contain; }
-  .option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #edf0f6; }
-  .option:hover { background: var(--accent-soft); }
-  .option:has(input:checked) { background: #eef2fb; font-weight: 500; }
-  .option input { width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+  .group-title { position: sticky; top: 0; z-index: 1; padding: 7px 12px; font-size: .75rem; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase; color: var(--group-color);
+    background: #f1f4fa; background: color-mix(in srgb, var(--group-color) 13%, #fff);
+    border-left: 5px solid var(--group-color); border-bottom: 1px solid #e3e8f2; }
+  .option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #edf0f6;
+    border-left: 5px solid var(--group-color); }
+  .option:hover { background: #f1f4fa; background: color-mix(in srgb, var(--group-color) 8%, #fff); }
+  .option:has(input:checked) { background: #eef2fb; background: color-mix(in srgb, var(--group-color) 14%, #fff); font-weight: 500; }
+  .option input { width: 18px; height: 18px; flex: none; accent-color: var(--group-color); }
   .dropdown-empty { padding: 14px 12px; margin: 0; color: var(--muted); }
   .dropdown-footer { padding: 8px; border-top: 1px solid var(--line); background: #fafbfd; }
   .dropdown-footer button { width: 100%; }
@@ -129,7 +134,7 @@
   .selected-title { font-weight: 600; margin: 18px 0 6px; color: var(--accent); }
   .selected-list { list-style: none; padding: 0; margin: 0; }
   .selected-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 8px;
-    background: #f6f8fc; border: 1px solid var(--line); border-radius: 12px; animation: reveal .2s ease; }
+    background: #f6f8fc; border: 1px solid var(--line); border-left: 5px solid var(--group-color); border-radius: 12px; animation: reveal .2s ease; }
   .selected-item .name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: .95rem; }
   .qty { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px; background: #fff; overflow: hidden; flex: none; }
   .qty button { border: 0; border-radius: 0; width: 34px; padding: 0; font-size: 1.2rem; line-height: 1; color: var(--accent); background: #fff; }
@@ -405,47 +410,57 @@
 const CONFIG = {
   // URL of the deployed Apps Script web app (ends with /exec).
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxaG1tw5n1Clz0w-DfPWWONj4oPPE8k65egYGR4Olow9HlZdhWToxigM1_RB9kLPw/exec',
-  // Items copied exactly (and in the same order) from the dropdown in the sheet's "Zawartość" column.
-  ITEMS: [
-    'ostrza OM 42,-',
-    'ostrza OD 75,-',
-    'Wymiana listy/ślizg (Ost/And) WŚ 20,-',
-    'Górne ostrze OG 20,-',
-    'nóż dł.*2,5,-',
-    'Sitko sam nóż 20,- kpl. 35,-',
-    'Nóż do kosiarki indy.',
-    'sekator, 35pln',
-    'Filcak Fi 30,-',
-    'kpl maszynka przemysłowa Mp 50,-',
-    'Nożyczki proste od 35,-',
-    'Nożyczki z mikroszlifem NzM 65,-',
-    'Nożyczki do ślizgu NS 85,-',
-    'Nożyczki Gięte, NG pow. 5" 65,-',
-    'Nożyczki Nd4 do 4" 30,-',
-    'Degażówki do 5” Dd5 50,-',
-    'Degazówki powyżej 5” De 85,-',
-    'Regeneracja mikroszlifu MICRO 20',
-    'Dorobienie śruby DŚN od 20,-',
-    'Dorobienie podpórki PpP 20,-',
-    'Dorobienie amortyzatora Amo 20',
-    'Nożyczki do pazurów 20,-',
-    'Nożyczki Domowe od 25,- ND',
-    'Cążki do skorek Ca 35,-',
-    'Cegi do paznokci Cęgi 40,-',
-    'Dorobienie sprężyny do cążków Spre 20,-',
-    'Dorobienie śruby DŚC 20,-',
-    'Nożyczki do skórek lub paznokci NSk od 20,-',
-    'Dłuto do paznokci DP od 20,-',
-    'Kopytko K 15,-',
-    'Peseta, Podważacz P 30,-',
-    'Nożyczki chirurgiczne małe NCHM 30,-',
-    'Nożyczki chirurgiczne duże NCHD 40,-'
+  // Items copied exactly from the dropdown in the sheet's "Zawartość" column, split into groups for readability.
+  // The group names and colors are only shown in the form; the sheet receives the item text unchanged.
+  ITEM_GROUPS: [
+    { label: 'Maszynki i ostrza', color: '#2f4d94', items: [
+      'ostrza OM 42,-',
+      'ostrza OD 75,-',
+      'Wymiana listy/ślizg (Ost/And) WŚ 20,-',
+      'Górne ostrze OG 20,-',
+      'nóż dł.*2,5,-',
+      'Sitko sam nóż 20,- kpl. 35,-',
+      'Nóż do kosiarki indy.',
+      'Filcak Fi 30,-',
+      'kpl maszynka przemysłowa Mp 50,-'
+    ] },
+    { label: 'Nożyczki', color: '#16808a', items: [
+      'Nożyczki proste od 35,-',
+      'Nożyczki z mikroszlifem NzM 65,-',
+      'Nożyczki do ślizgu NS 85,-',
+      'Nożyczki Gięte, NG pow. 5" 65,-',
+      'Nożyczki Nd4 do 4" 30,-',
+      'Degażówki do 5” Dd5 50,-',
+      'Degazówki powyżej 5” De 85,-',
+      'Regeneracja mikroszlifu MICRO 20',
+      'Dorobienie śruby DŚN od 20,-',
+      'Dorobienie podpórki PpP 20,-',
+      'Dorobienie amortyzatora Amo 20'
+    ] },
+    { label: 'Pazury, skórki i paznokcie', color: '#b45f06', items: [
+      'Nożyczki do pazurów 20,-',
+      'Nożyczki Domowe od 25,- ND',
+      'Cążki do skorek Ca 35,-',
+      'Cegi do paznokci Cęgi 40,-',
+      'Dorobienie sprężyny do cążków Spre 20,-',
+      'Dorobienie śruby DŚC 20,-',
+      'Nożyczki do skórek lub paznokci NSk od 20,-',
+      'Dłuto do paznokci DP od 20,-'
+    ] },
+    { label: 'Chirurgiczne i pozostałe', color: '#7a4fa3', items: [
+      'sekator, 35pln',
+      'Kopytko K 15,-',
+      'Peseta, Podważacz P 30,-',
+      'Nożyczki chirurgiczne małe NCHM 30,-',
+      'Nożyczki chirurgiczne duże NCHD 40,-'
+    ] }
   ],
   MAX_PHOTOS: 5,
   MAX_PDF_BYTES: 3 * 1024 * 1024
 };
 
-const ITEMS = CONFIG.ITEMS.map((name) => ({ name }));
+// Flat list used everywhere else: [{ name, group, color }]
+const ITEMS = CONFIG.ITEM_GROUPS.flatMap((group) => group.items.map((name) => ({ name, group: group.label, color: group.color })));
 
 // Values stored in the sheet (the sheet's own terms).
 const METHOD = { IN_PERSON: 'osobiście', COURIER: 'kurier' };
@@ -488,9 +503,21 @@ const normalizeText = (text) => text.toLowerCase().normalize('NFD').replace(/[̀
 
 function buildItems() {
   const list = $('items-list');
+  let lastGroup = null;
   ITEMS.forEach((item, index) => {
+    if (item.group !== lastGroup) {
+      const title = document.createElement('div');
+      title.className = 'group-title';
+      title.textContent = item.group;
+      title.dataset.group = item.group;
+      title.style.setProperty('--group-color', item.color);
+      list.append(title);
+      lastGroup = item.group;
+    }
     const option = document.createElement('label');
     option.className = 'option';
+    option.dataset.group = item.group;
+    option.style.setProperty('--group-color', item.color);
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     const text = document.createElement('span');
@@ -526,6 +553,7 @@ function renderSelectedItems() {
     const name = ITEMS[index].name;
     const row = document.createElement('li');
     row.className = 'selected-item';
+    row.style.setProperty('--group-color', ITEMS[index].color);
 
     const label = document.createElement('span');
     label.className = 'name';
@@ -590,13 +618,16 @@ function updateSummary() {
 
 function applyItemFilter() {
   const query = normalizeText(value('item-search'));
-  let visible = 0;
+  const visibleGroups = new Set();
   document.querySelectorAll('#items-list .option').forEach((option, index) => {
     const match = normalizeText(ITEMS[index].name).includes(query);
     option.hidden = !match;
-    if (match) visible++;
+    if (match) visibleGroups.add(ITEMS[index].group);
   });
-  $('items-empty').hidden = visible > 0;
+  document.querySelectorAll('#items-list .group-title').forEach((title) => {
+    title.hidden = !visibleGroups.has(title.dataset.group);
+  });
+  $('items-empty').hidden = visibleGroups.size > 0;
 }
 
 function setDropdownOpen(open) {
