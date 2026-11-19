@@ -177,11 +177,14 @@
   .size-panel { margin-top: 16px; }
   .size-tiles { grid-template-columns: repeat(3, 1fr); }
   .size-tile { flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 12px 8px; }
-  .size-tile .size-art { width: 100%; max-width: 92px; height: 64px; color: var(--accent); }
+  .size-tile .size-art { width: 100%; max-width: 104px; height: 74px; color: var(--accent); }
+  .size-art .b-top { fill: #ecd3a8; } .size-art .b-left { fill: #c9a066; } .size-art .b-right { fill: #b58a52; }
+  .size-art polygon { stroke: #7d5c30; stroke-width: .7; stroke-linejoin: round; }
+  .size-art .b-tape { fill: #f5e8cc; stroke: none; opacity: .9; }
+  .size-art .shadow { fill: currentColor; opacity: .14; }
   .size-tile .tile-sub { margin-top: 2px; }
   .size-tile:has(input:checked) .size-art { color: #fff; }
-  .size-tile .size-art .slot { fill: currentColor; fill-opacity: .16; stroke: currentColor; stroke-width: 1.6; }
-  .size-tile .size-art .frame { fill: none; stroke: currentColor; stroke-opacity: .35; stroke-width: 1.2; stroke-dasharray: 3 3; }
+  .size-tile:has(input:checked) .size-art polygon { stroke: #4a361b; }
   .size-tile .tile-title { font-size: .92rem; white-space: nowrap; }
   .size-tile .tile-sub { white-space: nowrap; font-size: .74rem; }
   @media (max-width: 420px) { .size-tiles { gap: 6px; } .size-tile { padding: 10px 4px; } .size-tile .tile-title { font-size: .86rem; } .size-tile .tile-sub { font-size: .68rem; } }
@@ -363,14 +366,14 @@
           <span class="group-label" id="label-parcel-size">Rozmiar paczki *</span>
           <div class="tiles size-tiles" id="parcel-size" role="radiogroup" aria-labelledby="label-parcel-size">
           <label class="tile size-tile"><input class="sr-only" type="radio" name="parcelSize" value="A">
-            <svg class="size-art" viewBox="0 0 80 56" aria-hidden="true"><rect class="frame" x="6" y="4" width="68" height="48" rx="4"/><rect class="slot" x="10" y="44" width="60" height="8" rx="3"/></svg>
-            <span class="tile-title">A – mała<span class="tile-sub">8 × 38 × 64 cm</span></span></label>
+            <svg class="size-art" viewBox="0 0 90 72" aria-hidden="true"><ellipse class="shadow" cx="45.0" cy="67.0" rx="32.9" ry="4"/><polygon class="b-left" points="37.1,68.0 14.1,54.7 14.1,49.1 37.1,62.4"/><polygon class="b-right" points="37.1,68.0 75.9,45.6 75.9,40.0 37.1,62.4"/><polygon class="b-top" points="37.1,62.4 75.9,40.0 52.9,26.7 14.1,49.1"/><polygon class="b-tape" points="27.4,56.8 66.2,34.4 62.6,32.3 23.8,54.7"/></svg>
+            <span class="tile-title">A – mała<span class="tile-sub">64 × 38 × 8 cm</span></span></label>
           <label class="tile size-tile"><input class="sr-only" type="radio" name="parcelSize" value="B">
-            <svg class="size-art" viewBox="0 0 80 56" aria-hidden="true"><rect class="frame" x="6" y="4" width="68" height="48" rx="4"/><rect class="slot" x="10" y="33" width="60" height="19" rx="3"/></svg>
-            <span class="tile-title">B – średnia<span class="tile-sub">19 × 38 × 64 cm</span></span></label>
+            <svg class="size-art" viewBox="0 0 90 72" aria-hidden="true"><ellipse class="shadow" cx="45.0" cy="67.0" rx="32.9" ry="4"/><polygon class="b-left" points="37.1,68.0 14.1,54.7 14.1,41.4 37.1,54.7"/><polygon class="b-right" points="37.1,68.0 75.9,45.6 75.9,32.3 37.1,54.7"/><polygon class="b-top" points="37.1,54.7 75.9,32.3 52.9,19.0 14.1,41.4"/><polygon class="b-tape" points="27.4,49.1 66.2,26.7 62.6,24.6 23.8,47.0"/><polygon class="b-tape" points="27.4,49.1 23.8,47.0 23.8,53.0 27.4,55.1"/></svg>
+            <span class="tile-title">B – średnia<span class="tile-sub">64 × 38 × 19 cm</span></span></label>
           <label class="tile size-tile"><input class="sr-only" type="radio" name="parcelSize" value="C">
-            <svg class="size-art" viewBox="0 0 80 56" aria-hidden="true"><rect class="frame" x="6" y="4" width="68" height="48" rx="4"/><rect class="slot" x="10" y="11" width="60" height="41" rx="3"/></svg>
-            <span class="tile-title">C – duża<span class="tile-sub">41 × 38 × 64 cm</span></span></label>
+            <svg class="size-art" viewBox="0 0 90 72" aria-hidden="true"><ellipse class="shadow" cx="45.0" cy="67.0" rx="32.9" ry="4"/><polygon class="b-left" points="37.1,68.0 14.1,54.7 14.1,26.0 37.1,39.3"/><polygon class="b-right" points="37.1,68.0 75.9,45.6 75.9,16.9 37.1,39.3"/><polygon class="b-top" points="37.1,39.3 75.9,16.9 52.9,3.6 14.1,26.0"/><polygon class="b-tape" points="27.4,33.7 66.2,11.3 62.6,9.2 23.8,31.6"/><polygon class="b-tape" points="27.4,33.7 23.8,31.6 23.8,40.6 27.4,42.7"/></svg>
+            <span class="tile-title">C – duża<span class="tile-sub">64 × 38 × 41 cm</span></span></label>
           </div>
           <p class="error" id="err-parcel-size" role="alert"></p>
           <p class="hint">Wybierz rozmiar skrytki w Paczkomacie InPost, w której nadasz paczkę. Maksymalna waga to 25 kg.</p>
