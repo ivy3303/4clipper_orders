@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formularz zamówienia</title>
+<script src="https://furgonetka.pl/js/dist/map/map.js" defer></script>
+<style>
+  :root {
+    --bg: #f6f5f3; --card: #ffffff; --text: #1f2328; --muted: #5d6670;
+    --line: #d7d9dc; --accent: #2f6f4f; --accent-dark: #245a3f; --danger: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 8px 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 20px; }
+  fieldset { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px; margin: 0 0 16px; min-width: 0; }
+  legend { font-weight: 600; padding: 0 6px; }
+  .row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+  .row.three { grid-template-columns: 1fr 2fr; }
+  .row.street { grid-template-columns: 2fr 1fr; }
+  @media (max-width: 520px) { .row, .row.three, .row.street { grid-template-columns: 1fr; } }
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  label.lbl { display: block; font-weight: 500; margin-bottom: 4px; }
+  .hint { color: var(--muted); font-size: .875rem; margin: 2px 0 0; }
+  input[type=text], input[type=email], input[type=tel], input[type=number], textarea {
+    width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 8px; background: #fff; color: inherit; }
+  textarea { min-height: 88px; resize: vertical; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible, .choice input:focus-visible {
+    outline: 3px solid #9cc7b0; outline-offset: 1px; }
+  [aria-invalid="true"] { border-color: var(--danger) !important; }
+  .err { color: var(--danger); font-size: .875rem; margin: 4px 0 0; min-height: 0; }
+  .err:empty { display: none; }
+  .choices { display: flex; gap: 10px; flex-wrap: wrap; }
+  .choice { flex: 1 1 140px; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px; cursor: pointer; background: #fff; }
+  .choice:has(input:checked) { border-color: var(--accent); background: #eef6f1; }
+  .choice input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .item { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .item:last-of-type { border-bottom: 0; }
+  .item .check { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; }
+  .item .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .item .qty { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .9rem; }
+  .item .qty input { width: 72px; padding: 6px 8px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line);
+    background: #fff; padding: 10px 14px; }
+  button.primary { width: 100%; background: var(--accent); border-color: var(--accent); color: #fff;
+    font-weight: 600; padding: 14px; font-size: 1.05rem; }
+  button.primary:hover:not(:disabled) { background: var(--accent-dark); }
+  button:disabled { opacity: .6; cursor: progress; }
+  .thumbs { list-style: none; padding: 0; margin: 10px 0 0; display: flex; gap: 10px; flex-wrap: wrap; }
+  .thumbs li { position: relative; }
+  .thumbs img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); display: block; }
+  .thumbs button { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; padding: 0;
+    border-radius: 50%; line-height: 1; font-size: 16px; }
+  .point { margin-top: 8px; padding: 10px 12px; background: #eef6f1; border-radius: 8px; }
+  .point:empty { display: none; }
+  .status { margin: 12px 0 0; padding: 12px; border-radius: 8px; background: #fdecea; color: var(--danger); }
+  .status:empty { display: none; }
+  .done { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; text-align: center; }
+  .done .nr { font-size: 2rem; font-weight: 700; color: var(--accent); margin: 8px 0; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Formularz zamówienia</h1>
+  <p class="lead">Pola oznaczone * są wymagane.</p>
+
+  <form id="form" novalidate>
+    <div class="hp" aria-hidden="true">
+      <label>Strona www <input type="text" id="website" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <fieldset>
+      <legend>Dane kontaktowe</legend>
+      <div class="row">
+        <div class="field">
+          <label class="lbl" for="imie">Imię *</label>
+          <input type="text" id="imie" autocomplete="given-name" required>
+          <p class="err" id="err-imie" role="alert"></p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="nazwisko">Nazwisko *</label>
+          <input type="text" id="nazwisko" autocomplete="family-name" required>
+          <p class="err" id="err-nazwisko" role="alert"></p>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="firma">Firma / NIP</label>
+        <input type="text" id="firma" autocomplete="organization">
+        <p class="hint">Opcjonalnie, np. do faktury.</p>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label class="lbl" for="telefon">Telefon *</label>
+          <input type="tel" id="telefon" autocomplete="tel" inputmode="tel" placeholder="123 456 789" required>
+          <p class="err" id="err-telefon" role="alert"></p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="mail">E-mail *</label>
+          <input type="email" id="mail" autocomplete="email" required>
+          <p class="err" id="err-mail" role="alert"></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset id="fs-pozycje">
+      <legend>Zawartość zamówienia *</legend>
+      <div id="pozycje"></div>
+      <p class="err" id="err-pozycje" role="alert"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dodatkowe informacje</legend>
+      <div class="field">
+        <label class="lbl" for="uwagi">Uwagi</label>
+        <textarea id="uwagi"></textarea>
+      </div>
+      <div class="field">
+        <label class="lbl" for="zdjecia">Zdjęcia</label>
+        <input type="file" id="zdjecia" accept="image/*" multiple>
+        <p class="hint" id="zdjecia-hint">Opcjonalnie, do 5 zdjęć. Zdjęcia są zmniejszane przed wysłaniem.</p>
+        <ul class="thumbs" id="miniatury"></ul>
+        <p class="err" id="err-zdjecia" role="alert"></p>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Dostawa i odbiór</legend>
+      <div class="field">
+        <span class="lbl" id="lbl-przekazanie">Jak dostarczysz zamówienie? *</span>
+        <div class="choices" role="radiogroup" aria-labelledby="lbl-przekazanie">
+          <label class="choice"><input type="radio" name="przekazanie" value="osobiście"> Osobiście</label>
+          <label class="choice"><input type="radio" name="przekazanie" value="kurier"> Kurierem</label>
+        </div>
+        <p class="err" id="err-przekazanie" role="alert"></p>
+      </div>
+      <div class="field">
+        <span class="lbl" id="lbl-odbior">Jak odbierzesz zamówienie? *</span>
+        <div class="choices" role="radiogroup" aria-labelledby="lbl-odbior">
+          <label class="choice"><input type="radio" name="odbior" value="osobiście"> Osobiście</label>
+          <label class="choice"><input type="radio" name="odbior" value="kurier"> Kurierem</label>
+        </div>
+        <p class="err" id="err-odbior" role="alert"></p>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Adres</legend>
+      <div class="row three">
+        <div class="field">
+          <label class="lbl" for="kod">Kod pocztowy *</label>
+          <input type="text" id="kod" autocomplete="postal-code" inputmode="numeric" placeholder="00-000" maxlength="6" required>
+          <p class="err" id="err-kod" role="alert"></p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="miejscowosc">Miejscowość *</label>
+          <input type="text" id="miejscowosc" autocomplete="address-level2" required>
+          <p class="err" id="err-miejscowosc" role="alert"></p>
+        </div>
+      </div>
+      <div class="row street">
+        <div class="field">
+          <label class="lbl" for="ulica">Ulica *</label>
+          <input type="text" id="ulica" autocomplete="address-line1" required>
+          <p class="err" id="err-ulica" role="alert"></p>
+        </div>
+        <div class="field">
+          <label class="lbl" for="nrDomu">Nr ulicy / lokalu *</label>
+          <input type="text" id="nrDomu" placeholder="15/3" required>
+          <p class="err" id="err-nrDomu" role="alert"></p>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset id="fs-paczkomat" hidden>
+      <legend>Paczkomat (opcjonalnie)</legend>
+      <p class="hint" style="margin-top:0">Jeśli wybierzesz paczkomat, wyślemy przesyłkę tam. W przeciwnym razie na adres powyżej.</p>
+      <button type="button" id="btn-mapa">Wybierz paczkomat na mapie</button>
+      <div class="point" id="punkt" aria-live="polite"></div>
+      <div class="field" style="margin-top:12px">
+        <label class="lbl" for="paczkomat">Kod paczkomatu</label>
+        <input type="text" id="paczkomat" placeholder="np. WAW116A" autocomplete="off" autocapitalize="characters">
+        <p class="hint">Uzupełni się po wyborze na mapie. Możesz też wpisać go ręcznie.</p>
+        <p class="err" id="err-paczkomat" role="alert"></p>
+      </div>
+    </fieldset>
+
+    <button type="submit" class="primary" id="wyslij">Wyślij zamówienie</button>
+    <p class="status" id="status" role="alert"></p>
+  </form>
+
+  <section class="done" id="done" hidden>
+    <h2>Dziękujemy, zamówienie zostało przyjęte.</h2>
+    <p>Numer zamówienia:</p>
+    <p class="nr" id="nr"></p>
+    <p>Zachowaj ten numer.</p>
+  </section>
+</main>
+
+<script>
+/* ===== USTAWIENIA ===== */
+const CONFIG = {
+  // Adres wdrożonej aplikacji internetowej Apps Script (kończy się na /exec)
+  APPS_SCRIPT_URL: 'WKLEJ_TUTAJ_ADRES_Z_APPS_SCRIPT',
+  // Lista pozycji do wyboru. Zamień na swoją pełną listę (nazwa razem z ceną).
+  POZYCJE: [
+    'ostrza OM 42,-',
+    'Degazówki powyżej 5” De 85,-',
+    'nóż dł.*2,5,-'
+  ],
+  MAX_ZDJEC: 5,
+  // true = adres wymagany tylko, gdy odbiór kurierem; false = adres zawsze wymagany
+  ADRES_TYLKO_PRZY_KURIERZE: false
+};
+
+/* ===== POMOCNICZE ===== */
+const $ = (id) => document.getElementById(id);
+const val = (id) => $(id).value.trim();
+const radio = (name) => { const r = document.querySelector('input[name="' + name + '"]:checked'); return r ? r.value : ''; };
+const submitKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+let zdjecia = [];
+
+function setErr(name, msg) {
+  const p = $('err-' + name);
+  if (p) p.textContent = msg || '';
+  const el = $(name);
+  if (el) { if (msg) el.setAttribute('aria-invalid', 'true'); else el.removeAttribute('aria-invalid'); }
+}
+
+/* ===== POZYCJE ===== */
+function budujPozycje() {
+  const box = $('pozycje');
+  CONFIG.POZYCJE.forEach((nazwa, i) => {
+    const row = document.createElement('div'); row.className = 'item';
+    const lbl = document.createElement('label'); lbl.className = 'check';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.i = i;
+    const sp = document.createElement('span'); sp.textContent = nazwa;
+    lbl.append(cb, sp);
+    const q = document.createElement('label'); q.className = 'qty';
+    const qi = document.createElement('input'); qi.type = 'number'; qi.min = 1; qi.max = 999; qi.value = 1; qi.disabled = true;
+    qi.setAttribute('aria-label', 'Ilość: ' + nazwa);
+    q.append('Ilość', qi);
+    cb.addEventListener('change', () => { qi.disabled = !cb.checked; setErr('pozycje', ''); });
+    row.append(lbl, q);
+    box.append(row);
+  });
+}
+function pobierzPozycje() {
+  const out = [];
+  document.querySelectorAll('#pozycje .item').forEach((row, i) => {
+    const cb = row.querySelector('input[type=checkbox]');
+    if (cb.checked) out.push({ nazwa: CONFIG.POZYCJE[i], ilosc: parseInt(row.querySelector('input[type=number]').value, 10) });
+  });
+  return out;
+}
+
+/* ===== TELEFON, KOD POCZTOWY ===== */
+function normalizujTelefon(s) {
+  const t = s.replace(/[\s\-().]/g, '');
+  let m = t.match(/^(?:\+?48|0048)?(\d{9})$/);
+  if (m) return m[1].replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+  if (/^\+\d{8,15}$/.test(t)) return t;
+  return '';
+}
+$('kod').addEventListener('input', (e) => {
+  const d = e.target.value.replace(/\D/g, '').slice(0, 5);
+  e.target.value = d.length > 2 ? d.slice(0, 2) + '-' + d.slice(2) : d;
+});
+
+/* ===== ODBIÓR / PACZKOMAT ===== */
+function odswiezWidocznosc() {
+  $('fs-paczkomat').hidden = radio('odbior') !== 'kurier';
+}
+document.querySelectorAll('input[name=odbior]').forEach((r) => r.addEventListener('change', () => { odswiezWidocznosc(); setErr('odbior', ''); }));
+document.querySelectorAll('input[name=przekazanie]').forEach((r) => r.addEventListener('change', () => setErr('przekazanie', '')));
+
+function ustawPunkt(code, name) {
+  $('paczkomat').value = String(code || '').toUpperCase();
+  $('punkt').textContent = code ? ('Wybrany paczkomat: ' + String(code).toUpperCase() + (name && name !== code ? ' (' + name + ')' : '')) : '';
+  setErr('paczkomat', '');
+}
+$('btn-mapa').addEventListener('click', () => {
+  if (!window.Furgonetka || !window.Furgonetka.Map) {
+    setErr('paczkomat', 'Mapa się nie załadowała. Wpisz kod paczkomatu ręcznie.');
+    return;
+  }
+  const cfg = {
+    courierServices: ['inpost'],
+    type: 'parcel_machine',
+    zoom: 15,
+    callback: (wynik) => { if (wynik && wynik.point) ustawPunkt(wynik.point.code, wynik.point.name); }
+  };
+  if (val('miejscowosc')) cfg.city = val('miejscowosc');
+  new window.Furgonetka.Map(cfg).show();
+});
+$('paczkomat').addEventListener('input', () => { $('punkt').textContent = ''; setErr('paczkomat', ''); });
+
+/* ===== ZDJĘCIA ===== */
+function dekoduj(file) {
+  const fallback = () => new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+    img.src = url;
+  });
+  if (window.createImageBitmap) return createImageBitmap(file, { imageOrientation: 'from-image' }).catch(fallback);
+  return fallback();
+}
+function blobDoBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1]);
+    r.onerror = () => reject(new Error('read'));
+    r.readAsDataURL(blob);
+  });
+}
+async function kompresuj(file) {
+  const src = await dekoduj(file);
+  const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height;
+  const skala = Math.min(1, 1600 / Math.max(w, h));
+  const c = document.createElement('canvas');
+  c.width = Math.round(w * skala); c.height = Math.round(h * skala);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(src, 0, 0, c.width, c.height);
+  const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.78));
+  if (!blob) throw new Error('encode');
+  return { nazwa: file.name, data: await blobDoBase64(blob), url: URL.createObjectURL(blob) };
+}
+function rysujMiniatury() {
+  const ul = $('miniatury'); ul.textContent = '';
+  zdjecia.forEach((z, i) => {
+    const li = document.createElement('li');
+    const img = document.createElement('img'); img.src = z.url; img.alt = 'Zdjęcie ' + (i + 1);
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = '×'; b.setAttribute('aria-label', 'Usuń zdjęcie ' + (i + 1));
+    b.addEventListener('click', () => { URL.revokeObjectURL(z.url); zdjecia.splice(i, 1); rysujMiniatury(); });
+    li.append(img, b); ul.append(li);
+  });
+}
+$('zdjecia').addEventListener('change', async (e) => {
+  setErr('zdjecia', '');
+  const pliki = Array.from(e.target.files);
+  e.target.value = '';
+  let pominiete = 0, bledy = 0;
+  for (const f of pliki) {
+    if (zdjecia.length >= CONFIG.MAX_ZDJEC) { pominiete++; continue; }
+    try { zdjecia.push(await kompresuj(f)); } catch (err) { bledy++; }
+  }
+  rysujMiniatury();
+  const uwagi = [];
+  if (pominiete) uwagi.push('Maksymalnie ' + CONFIG.MAX_ZDJEC + ' zdjęć. Część pominięto.');
+  if (bledy) uwagi.push('Nie udało się odczytać ' + bledy + ' plik(ów). Użyj formatu JPG lub PNG.');
+  if (uwagi.length) setErr('zdjecia', uwagi.join(' '));
+});
+
+/* ===== WALIDACJA I WYSYŁKA ===== */
+function waliduj() {
+  const bledy = [];
+  const wymagane = (id, msg) => { if (!val(id)) { setErr(id, msg || 'To pole jest wymagane.'); bledy.push(id); } else setErr(id, ''); };
+  wymagane('imie'); wymagane('nazwisko');
+  if (!val('telefon')) { setErr('telefon', 'To pole jest wymagane.'); bledy.push('telefon'); }
+  else if (!normalizujTelefon(val('telefon'))) { setErr('telefon', 'Podaj poprawny numer telefonu (9 cyfr).'); bledy.push('telefon'); }
+  else setErr('telefon', '');
+  if (!val('mail')) { setErr('mail', 'To pole jest wymagane.'); bledy.push('mail'); }
+  else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val('mail'))) { setErr('mail', 'Podaj poprawny adres e-mail.'); bledy.push('mail'); }
+  else setErr('mail', '');
+
+  const poz = pobierzPozycje();
+  if (!poz.length) { setErr('pozycje', 'Wybierz co najmniej jedną pozycję.'); bledy.push('fs-pozycje'); }
+  else if (poz.some((p) => !(p.ilosc >= 1 && p.ilosc <= 999))) { setErr('pozycje', 'Podaj ilość od 1 do 999.'); bledy.push('fs-pozycje'); }
+  else setErr('pozycje', '');
+
+  if (!radio('przekazanie')) { setErr('przekazanie', 'Wybierz jedną opcję.'); bledy.push('err-przekazanie'); } else setErr('przekazanie', '');
+  if (!radio('odbior')) { setErr('odbior', 'Wybierz jedną opcję.'); bledy.push('err-odbior'); } else setErr('odbior', '');
+
+  const adresWymagany = !CONFIG.ADRES_TYLKO_PRZY_KURIERZE || radio('odbior') === 'kurier';
+  ['ulica', 'nrDomu', 'miejscowosc'].forEach((id) => { if (adresWymagany) wymagane(id); else setErr(id, ''); });
+  if (adresWymagany) {
+    if (!val('kod')) { setErr('kod', 'To pole jest wymagane.'); bledy.push('kod'); }
+    else if (!/^\d{2}-\d{3}$/.test(val('kod'))) { setErr('kod', 'Kod w formacie 00-000.'); bledy.push('kod'); }
+    else setErr('kod', '');
+  } else setErr('kod', '');
+
+  const pk = val('paczkomat').toUpperCase();
+  if (radio('odbior') === 'kurier' && pk && !/^[A-Z0-9-]{4,20}$/.test(pk)) { setErr('paczkomat', 'Nieprawidłowy kod paczkomatu.'); bledy.push('paczkomat'); }
+  else setErr('paczkomat', '');
+
+  if (bledy.length) {
+    const first = $(bledy[0]);
+    if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (first.focus && first.tagName !== 'FIELDSET') first.focus({ preventScroll: true }); }
+    return false;
+  }
+  return true;
+}
+
+function zbierz() {
+  const kurier = radio('odbior') === 'kurier';
+  return {
+    key: submitKey,
+    website: $('website').value,
+    przekazanie: radio('przekazanie'),
+    odbior: radio('odbior'),
+    imie: val('imie'), nazwisko: val('nazwisko'), firma: val('firma'),
+    telefon: normalizujTelefon(val('telefon')), mail: val('mail'),
+    pozycje: pobierzPozycje(),
+    uwagi: val('uwagi'),
+    paczkomat: kurier ? val('paczkomat').toUpperCase() : '',
+    ulica: val('ulica'), nrDomu: val('nrDomu'), kod: val('kod'), miejscowosc: val('miejscowosc'),
+    zdjecia: zdjecia.map((z) => ({ nazwa: z.nazwa, data: z.data }))
+  };
+}
+
+function pokazStatus(msg) { $('status').textContent = msg || ''; }
+
+$('form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  pokazStatus('');
+  if (!waliduj()) return;
+  if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.indexOf('script.google.com') === -1) {
+    pokazStatus('Formularz nie jest jeszcze podłączony do arkusza (brak adresu Apps Script).');
+    return;
+  }
+  const btn = $('wyslij'); btn.disabled = true; btn.textContent = 'Wysyłanie…';
+  try {
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(zbierz())
+    });
+    const json = await res.json();
+    if (json && json.ok) {
+      $('form').hidden = true; $('done').hidden = false;
+      $('nr').textContent = json.nr;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      pokazStatus('Nie udało się zapisać zamówienia' + (json && json.error ? ' (' + json.error + ')' : '') + '. Sprawdź dane i spróbuj ponownie.');
+    }
+  } catch (err) {
+    pokazStatus('Nie udało się wysłać zamówienia. Sprawdź połączenie i spróbuj ponownie. Ponowna próba nie utworzy duplikatu.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Wyślij zamówienie';
+  }
+});
+
+// błąd przy polu znika, gdy użytkownik zaczyna je poprawiać
+document.querySelectorAll('#form input[id], #form textarea[id]').forEach((el) => {
+  el.addEventListener('input', () => { if ($('err-' + el.id)) setErr(el.id, ''); });
+});
+
+budujPozycje();
+odswiezWidocznosc();
+</script>
+</body>
+</html>
