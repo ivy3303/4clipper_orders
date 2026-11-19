@@ -218,6 +218,8 @@
   .done h2 { margin: 0 0 4px; color: var(--accent); }
   .done .order-number { display: inline-block; font-size: 2.2rem; font-weight: 800; color: var(--accent);
     background: var(--accent-soft); border-radius: 14px; padding: 6px 22px; margin: 10px 0; }
+  .done .mail-info { max-width: 460px; margin: 14px auto 0; font-size: .92rem; line-height: 1.5; color: #46526a; }
+  .done .mail-info a { color: var(--accent-light); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
   .done .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
   .honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 </style>
@@ -447,6 +449,7 @@
     <p>Numer zlecenia:</p>
     <p class="order-number" id="order-number"></p>
     <p class="hint">Zachowaj ten numer, przyda się przy kontakcie.</p>
+    <p class="mail-info">Potwierdzenie wyślemy e-mailem w ciągu kilku minut. Jeśli nie dotrze, sprawdź folder Spam lub napisz do nas: <a href="mailto:kontakt@4clipper.pl">kontakt@4clipper.pl</a></p>
     <p class="note" id="done-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zlecenia.</span></p>
     <div class="actions">
       <button type="button" id="copy-number">Skopiuj numer</button>
