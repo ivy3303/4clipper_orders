@@ -89,6 +89,11 @@
   .tile:has(input:checked) .icon { color: #fff; }
   .field + .field.spaced, .spaced { margin-top: 20px; }
 
+  /* short hint shown next to the courier / parcel locker options */
+  .note { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0 0; padding: 10px 12px; font-size: .9rem;
+    background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 8px; animation: reveal .25s ease; }
+  .note .icon { width: 20px; height: 20px; color: var(--accent); margin-top: 1px; }
+
   /* revealed panels */
   .panel { margin-top: 16px; padding: 16px; border-radius: 12px; background: #f6f8fc;
     border: 1px solid var(--line); animation: reveal .25s ease; }
@@ -197,6 +202,7 @@
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
 </svg>
 
 <header>
@@ -319,12 +325,15 @@
       <div class="field">
         <span class="group-label" id="label-handover-method">Jak dostarczysz zamówienie? *</span>
         <div class="tiles" id="handover-method" role="radiogroup" aria-labelledby="label-handover-method">
-          <label class="tile"><input class="sr-only" type="radio" name="handoverMethod" value="osobiście">
+          <label class="tile"><input class="sr-only" type="radio" name="handoverOption" value="in-person">
             <svg class="icon"><use href="#i-user"/></svg><span class="tile-title">Osobiście</span></label>
-          <label class="tile"><input class="sr-only" type="radio" name="handoverMethod" value="kurier">
-            <svg class="icon"><use href="#i-truck"/></svg><span class="tile-title">Kurierem</span></label>
+          <label class="tile"><input class="sr-only" type="radio" name="handoverOption" value="courier">
+            <svg class="icon"><use href="#i-truck"/></svg><span class="tile-title">Kurier</span></label>
+          <label class="tile"><input class="sr-only" type="radio" name="handoverOption" value="locker">
+            <svg class="icon"><use href="#i-locker"/></svg><span class="tile-title">Paczkomat<span class="tile-sub">InPost</span></span></label>
         </div>
         <p class="error" id="err-handover-method" role="alert"></p>
+        <p class="note" id="handover-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zamówienia. Numer dostaniesz po wysłaniu tego formularza.</span></p>
       </div>
 
       <div class="field spaced">
@@ -398,6 +407,7 @@
     <p>Numer zamówienia:</p>
     <p class="order-number" id="order-number"></p>
     <p class="hint">Zachowaj ten numer, przyda się przy kontakcie.</p>
+    <p class="note" id="done-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zamówienia.</span></p>
     <div class="actions">
       <button type="button" id="copy-number">Skopiuj numer</button>
       <button type="button" class="secondary" id="new-order">Złóż kolejne zamówienie</button>
@@ -461,9 +471,6 @@ const CONFIG = {
 
 // Flat list used everywhere else: [{ name, group, color }]
 const ITEMS = CONFIG.ITEM_GROUPS.flatMap((group) => group.items.map((name) => ({ name, group: group.label, color: group.color })));
-
-// Values stored in the sheet (the sheet's own terms).
-const METHOD = { IN_PERSON: 'osobiście', COURIER: 'kurier' };
 
 // Polish messages shown to the customer for server error codes.
 const SERVER_ERRORS = {
@@ -696,8 +703,12 @@ $('postal-code').addEventListener('input', (event) => {
 });
 
 /* ===== HANDOVER / RETURN OPTIONS ===== */
-document.querySelectorAll('input[name=handoverMethod]').forEach((radio) => {
-  radio.addEventListener('change', () => setError('handover-method', ''));
+// The reminder about the note with the order number is shown for courier and parcel locker only.
+document.querySelectorAll('input[name=handoverOption]').forEach((radio) => {
+  radio.addEventListener('change', () => {
+    setError('handover-method', '');
+    $('handover-note').hidden = checkedRadio('handoverOption') === 'in-person';
+  });
 });
 
 // Show the address only for a courier return and the parcel locker section only for a locker return.
@@ -894,7 +905,7 @@ function validateForm() {
   else if (items.some((item) => !(item.quantity >= 1 && item.quantity <= 999))) { setError('items', 'Podaj ilość od 1 do 999.'); invalid.push('items'); }
   else setError('items', '');
 
-  if (!checkedRadio('handoverMethod')) { setError('handover-method', 'Wybierz jedną opcję.'); invalid.push('handover-method'); }
+  if (!checkedRadio('handoverOption')) { setError('handover-method', 'Wybierz jedną opcję.'); invalid.push('handover-method'); }
   else setError('handover-method', '');
 
   const option = checkedRadio('returnOption');
@@ -930,7 +941,7 @@ function collectPayload() {
   return {
     key: submitKey,
     website: $('website').value,
-    handoverMethod: checkedRadio('handoverMethod'),
+    handoverOption: checkedRadio('handoverOption'),
     returnOption: option,
     firstName: value('first-name'),
     lastName: value('last-name'),
@@ -980,6 +991,7 @@ $('order-form').addEventListener('submit', async (event) => {
     const result = await response.json();
     if (result && result.ok) {
       $('order-form').hidden = true;
+      $('done-note').hidden = checkedRadio('handoverOption') === 'in-person';
       $('done').hidden = false;
       $('order-number').textContent = result.orderNumber;
       window.scrollTo({ top: 0, behavior: 'smooth' });
