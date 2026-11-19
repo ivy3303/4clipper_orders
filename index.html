@@ -173,6 +173,19 @@
   .locker-info strong { color: var(--accent); }
   .locker-code-field { margin-top: 14px; }
 
+  /* parcel size tiles (InPost locker sizes A, B, C) */
+  .size-panel { margin-top: 16px; }
+  .size-tiles { grid-template-columns: repeat(3, 1fr); }
+  .size-tile { flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 12px 8px; }
+  .size-tile .size-art { width: 100%; max-width: 92px; height: 64px; color: var(--accent); }
+  .size-tile .tile-sub { margin-top: 2px; }
+  .size-tile:has(input:checked) .size-art { color: #fff; }
+  .size-tile .size-art .slot { fill: currentColor; fill-opacity: .16; stroke: currentColor; stroke-width: 1.6; }
+  .size-tile .size-art .frame { fill: none; stroke: currentColor; stroke-opacity: .35; stroke-width: 1.2; stroke-dasharray: 3 3; }
+  .size-tile .tile-title { font-size: .92rem; white-space: nowrap; }
+  .size-tile .tile-sub { white-space: nowrap; font-size: .74rem; }
+  @media (max-width: 420px) { .size-tiles { gap: 6px; } .size-tile { padding: 10px 4px; } .size-tile .tile-title { font-size: .86rem; } .size-tile .tile-sub { font-size: .68rem; } }
+
   /* parcel locker map (InPost Geowidget) in a dialog */
   .map-dialog { width: min(720px, 96vw); height: min(640px, 88vh); padding: 0; border: 0; border-radius: 14px;
     box-shadow: 0 20px 50px rgba(20, 32, 58, .35); overflow: hidden; color: var(--text); }
@@ -345,6 +358,23 @@
             <svg class="icon"><use href="#i-locker"/></svg><span class="tile-title">Paczkomat<span class="tile-sub">InPost</span></span></label>
         </div>
         <p class="error" id="err-handover-method" role="alert"></p>
+
+        <div class="size-panel" id="size-panel" hidden>
+          <span class="group-label" id="label-parcel-size">Rozmiar paczki *</span>
+          <div class="tiles size-tiles" id="parcel-size" role="radiogroup" aria-labelledby="label-parcel-size">
+          <label class="tile size-tile"><input class="sr-only" type="radio" name="parcelSize" value="A">
+            <svg class="size-art" viewBox="0 0 80 56" aria-hidden="true"><rect class="frame" x="6" y="4" width="68" height="48" rx="4"/><rect class="slot" x="10" y="44" width="60" height="8" rx="3"/></svg>
+            <span class="tile-title">A – mała<span class="tile-sub">8 × 38 × 64 cm</span></span></label>
+          <label class="tile size-tile"><input class="sr-only" type="radio" name="parcelSize" value="B">
+            <svg class="size-art" viewBox="0 0 80 56" aria-hidden="true"><rect class="frame" x="6" y="4" width="68" height="48" rx="4"/><rect class="slot" x="10" y="33" width="60" height="19" rx="3"/></svg>
+            <span class="tile-title">B – średnia<span class="tile-sub">19 × 38 × 64 cm</span></span></label>
+          <label class="tile size-tile"><input class="sr-only" type="radio" name="parcelSize" value="C">
+            <svg class="size-art" viewBox="0 0 80 56" aria-hidden="true"><rect class="frame" x="6" y="4" width="68" height="48" rx="4"/><rect class="slot" x="10" y="11" width="60" height="41" rx="3"/></svg>
+            <span class="tile-title">C – duża<span class="tile-sub">41 × 38 × 64 cm</span></span></label>
+          </div>
+          <p class="error" id="err-parcel-size" role="alert"></p>
+          <p class="hint">Wybierz rozmiar skrytki w Paczkomacie InPost, w której nadasz paczkę. Maksymalna waga to 25 kg.</p>
+        </div>
         <p class="note" id="handover-note" hidden><svg class="icon"><use href="#i-info"/></svg><span>Pamiętaj, aby dołączyć do paczki karteczkę z numerem zlecenia. Numer dostaniesz po wysłaniu tego formularza.</span></p>
       </div>
 
@@ -726,7 +756,11 @@ document.querySelectorAll('input[name=handoverOption]').forEach((radio) => {
   radio.addEventListener('change', () => {
     setError('handover-method', '');
     $('handover-note').hidden = checkedRadio('handoverOption') === 'in-person';
+    $('size-panel').hidden = checkedRadio('handoverOption') !== 'locker';
   });
+});
+document.querySelectorAll('input[name=parcelSize]').forEach((radio) => {
+  radio.addEventListener('change', () => setError('parcel-size', ''));
 });
 
 // Show the address only for a courier return and the parcel locker section only for a locker return.
@@ -941,6 +975,9 @@ function validateForm() {
   if (!checkedRadio('handoverOption')) { setError('handover-method', 'Wybierz jedną opcję.'); invalid.push('handover-method'); }
   else setError('handover-method', '');
 
+  if (checkedRadio('handoverOption') === 'locker' && !checkedRadio('parcelSize')) { setError('parcel-size', 'Wybierz rozmiar paczki.'); invalid.push('parcel-size'); }
+  else setError('parcel-size', '');
+
   const option = checkedRadio('returnOption');
   ['street', 'building-number', 'city', 'postal-code'].forEach((id) => setError(id, ''));
   if (option === 'address') {
@@ -975,6 +1012,7 @@ function collectPayload() {
     key: submitKey,
     website: $('website').value,
     handoverOption: checkedRadio('handoverOption'),
+    parcelSize: checkedRadio('handoverOption') === 'locker' ? checkedRadio('parcelSize') : '',
     returnOption: option,
     firstName: value('first-name'),
     lastName: value('last-name'),
